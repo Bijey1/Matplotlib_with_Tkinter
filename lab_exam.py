@@ -1,10 +1,11 @@
 from tabnanny import check
 
 import matplotlib.pyplot as plt
+
 import tkinter as tk
 
 from PIL.ImageOps import expand
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
 from tkinter import messagebox, BooleanVar
 from tkinter import ttk
@@ -26,6 +27,11 @@ fig, ax = plt.subplots(figsize=(9, 8),facecolor="#F3F3F3")  # width=8 inches, he
 canvas=FigureCanvasTkAgg(fig, master=rightSideFrame)
 canvas.get_tk_widget().place(rely=0.5,relx=0.5,anchor="center")
 
+
+toolbar = NavigationToolbar2Tk(canvas, rightSideFrame)
+toolbar.update()
+toolbar.pack_forget()  # hide immediately
+
 xTest=np.array(["Test 1","Test 2","Test 3"])
 yTest=np.array([1,2,3])
 
@@ -34,7 +40,7 @@ currentVal = {}
 showToggle = tk.BooleanVar(value=False)
 
 def createLinePlot(xValues,yValues,formatVals,first,toggle,labels):
-    global ax, currentVal,showToggle
+    global ax, currentVal,showToggle,toolBar
     fig.clear()  # clear the entire figure
     ax = fig.add_subplot(111)  # create a new axes each time
     finalValues={}
@@ -52,6 +58,7 @@ def createLinePlot(xValues,yValues,formatVals,first,toggle,labels):
         spine.set_linewidth(1)
     if(first): #If first time or cleared
     #ax.plot(xTest,yTest)
+        toolbar.pack_forget()
         showToggle.set(False)
         ax.plot([0],[0])
         ax.set_title("Line Graph")
@@ -79,6 +86,8 @@ def createLinePlot(xValues,yValues,formatVals,first,toggle,labels):
             "ylabel":labels[2],
         }
 
+        
+
 
 
         if toggle:
@@ -93,6 +102,8 @@ def createLinePlot(xValues,yValues,formatVals,first,toggle,labels):
         ax.set_title(finalValues["title"])
         ax.set_xlabel(finalValues["xlabel"])
         ax.set_ylabel(finalValues["ylabel"])
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        
 
         #Toggle Options
         ax.grid(checkGrid.get())
@@ -108,8 +119,9 @@ def createLinePlot(xValues,yValues,formatVals,first,toggle,labels):
 
     canvas.draw()
 
+
 def createBarPlot(xValues,yValues,colorBar,edgeColor,hatchBar,widthBar,first,toggle,labels):
-    global ax,currentVal,showToggle
+    global ax,currentVal,showToggle,toolBar
     fig.clear()
     ax = fig.add_subplot(111)
 
@@ -131,6 +143,7 @@ def createBarPlot(xValues,yValues,colorBar,edgeColor,hatchBar,widthBar,first,tog
     if (first):  # If first time or cleared
         # ax.plot(xTest,yTest)
         showToggle.set(False)
+        toolbar.pack_forget()
         ax.bar([0], [0], width=0.5)
         ax.set_title("Bar Graph")
         ax.set_ylabel("Y Label")
@@ -174,6 +187,7 @@ def createBarPlot(xValues,yValues,colorBar,edgeColor,hatchBar,widthBar,first,tog
         ax.set_title(finalValues["title"])
         ax.set_xlabel(finalValues["xlabel"])
         ax.set_ylabel(finalValues["ylabel"])
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         #Toggles
         ax.grid(checkGrid.get())
@@ -205,7 +219,7 @@ def createBarPlot(xValues,yValues,colorBar,edgeColor,hatchBar,widthBar,first,tog
     canvas.draw()
 
 def createPiePlot(xValues,yValues,pieColor,pieHatch,explode,percentage,first,toggle,labels):
-    global ax,currentVal
+    global ax,currentVal,toolBar
     fig.clear()
     ax = fig.add_subplot(111)
 
@@ -219,6 +233,7 @@ def createPiePlot(xValues,yValues,pieColor,pieHatch,explode,percentage,first,tog
     if (first):  # If first time or cleared
         # ax.plot(xTest,yTest)
         ax.pie([1], labels=[''],colors=['lightgrey'], )
+        toolbar.pack_forget()
 
 
         ax.text(0.5, 0.5, 'Input data to generate the plot.',
@@ -251,6 +266,8 @@ def createPiePlot(xValues,yValues,pieColor,pieHatch,explode,percentage,first,tog
             ax.pie(finalValues["y"], labels=finalValues["x"],colors=finalValues["colors"],hatch=finalValues["hatch"],explode=finalValues["explode"],shadow = checkShadow.get())
         else:
             ax.pie(finalValues["y"], labels=finalValues["x"], colors=finalValues["colors"], hatch=finalValues["hatch"],explode=finalValues["explode"], shadow=checkShadow.get(),autopct="%1.1f%%")
+
+        toolbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         if checkLegend.get():
             ax.legend(title="Categories")
@@ -289,12 +306,12 @@ def confirmPop(text):
 def mesBox(text):
     tk.messagebox.showinfo("Input Error",text)
 
-def onCustomSelect(event,type,graph):#if the user chose the custom instead of random
+def onCustomSelect(event,type,graph,whatWidget):#if the user chose the custom instead of random
     if (event.widget.get()=="Custom"):
         if(graph =="barColor"):
-            openColorPopUp(type)
+            openColorPopUp(type,whatWidget)
         elif(graph =="hatch"):
-            openHatchPopUp(type)
+            openHatchPopUp(type,whatWidget)
 
 
 #Color for Bar
@@ -307,15 +324,21 @@ pieHatch=[]
 
 explodeVal=[]
 
-def openColorPopUp(type):
+lastColBar=["red","red","red","red","red"]
+lastColEdge=["red","red","red","red","red"]
+lastColPie=["red","red","red","red","red"]
+
+def openColorPopUp(type,comboBox):
+    print(f"ComBox is {comboBox}")
     popup=tk.Toplevel(root)
     popup.title("Custom")
     popup.geometry("300x300")
-    popup.grab_set()
+    
+    popup.grab_set() #Disable user to click outside the tab
     print("The type is "+type)
 
     colorValuesTemp=[]
-    global colorValues
+    global colorValues,lastColBar,lastColEdge,lastColPie
     colorValues =[]
 
     popHead=tk.Frame(popup,bg=mint_green,height=30)
@@ -327,11 +350,22 @@ def openColorPopUp(type):
     #Center Frame
     centerFPop=tk.Frame(popup)
     centerFPop.pack_propagate(False)
-    centerFPop.pack(pady=15,padx=15,fill="both",expand=True)
+    centerFPop.pack(pady=10,padx=15,fill="both",expand=True)
 
     # Inner container (to center the grid content)
     innerFrame = tk.Frame(centerFPop)
     innerFrame.place(relx=0.5, rely=0.5, anchor="center")
+    prevCol=[]
+
+    if(type == "Bar Colors"):
+         print("pumunta here sa Color Bar")
+         prevCol = lastColBar
+    elif(type == "Edge Color"):
+        print("pumunta here sa edge Bar")
+        prevCol = lastColEdge
+    elif (type == "Colors"):
+        prevCol=lastColPie
+
     # Creating the entries for x and y
     for j in range(5):
 
@@ -340,45 +374,80 @@ def openColorPopUp(type):
         itemLabelPop.grid(row=j, column=0, sticky="e", padx=5, pady=10)
 
         # Entry
+        
+        indexOfLastColor = colorOption.index(prevCol[j])
         dropDownPop = ttk.Combobox(innerFrame, values=colorOption, state="readonly", width=10)
-        dropDownPop.current(0)
+        dropDownPop.current(indexOfLastColor)
         dropDownPop.grid(row=j, column=1, sticky="ew", padx=5, pady=10)
+        
+
+        colorLabel=tk.Label(innerFrame,bg=dropDownPop.get(),width=2,relief="solid")
+        colorLabel.grid(row=j, column=2, sticky="e", padx=5, pady=10)
+
+        dropDownPop.bind("<<ComboboxSelected>>", lambda event, lbl=colorLabel: lbl.config(bg=event.widget.get()))
 
         colorValuesTemp.append(dropDownPop)
 
+
+
+
     def saveColors():
-        global colorBar,edgeColor,pieColor
-        if confirmPop("Confirm?"):
+        global colorBar,edgeColor,pieColor,lastColBar,lastColEdge,lastColPie
+        if confirmPop("Change Colors?"):
             for i in colorValuesTemp:
                 colorValues.append(i.get())
             if(type == "Bar Colors"):
                 print("pumunta here sa Color Bar")
                 colorBar = colorValues
+                lastColBar=colorBar
             elif(type == "Edge Color"):
                 print("pumunta here sa edge Bar")
                 edgeColor = colorValues
+                lastColEdge=edgeColor
             elif (type == "Colors"):
                 pieColor=colorValues
+                lastColPie=pieColor
 
+        
             popup.destroy()
-
+  
+    
+    def closePop():
+        if confirmPop("Close Custom Tab?"):
+            #comboBox.current(0)
+            popup.destroy()
+            
     butFrame = tk.Frame(popup)
-    butFrame.pack(fill="x",pady=(0,15))
+    butFrame.pack(side="bottom", pady=10)  # Bottom center
+
 
     tk.Button(
         butFrame,
         command=saveColors,
         text="Save",
-        bg="green",
+        bg="#2E8B57",
         fg="white",
         font=("Arial", 10, "bold"),
         width=10
-    ).pack()
+    ).pack(side="left",padx=1)
+
+    tk.Button(
+        butFrame,
+        command=closePop,
+        text="Close",
+        bg="#CD5C5C",
+        fg="white",
+        font=("Arial", 10, "bold"),
+        width=10
+    ).pack(side="left",padx=1)
+
+    popup.protocol("WM_DELETE_WINDOW", closePop)
+    
 
 
 
 
-def openHatchPopUp(type):
+def openHatchPopUp(type,widget):
     popup=tk.Toplevel(root)
     popup.title("Custom")
     popup.geometry("300x300")
@@ -449,20 +518,38 @@ def openHatchPopUp(type):
 
 
             popup.destroy()
+        
 
+    def closeHatch():
+        if confirmPop("Close Custom Tab?"):
+            widget.current(0)
+            popup.destroy()
+            
     butFrame = tk.Frame(popup)
-    butFrame.pack(fill="x",pady=(0,15))
+    butFrame.pack(side="bottom", pady=10)  # Bottom center
+
 
     tk.Button(
         butFrame,
         command=saveHatch,
         text="Save",
-        bg="green",
+        bg="#2E8B57",
         fg="white",
         font=("Arial", 10, "bold"),
         width=10
-    ).pack()
+    ).pack(side="left",padx=1)
 
+    tk.Button(
+        butFrame,
+        command=closeHatch,
+        text="Close",
+        bg="#CD5C5C",
+        fg="white",
+        font=("Arial", 10, "bold"),
+        width=10
+    ).pack(side="left",padx=1)
+    
+    popup.protocol("WM_DELETE_WINDOW", closeHatch)
 
 
 #Format Container Content
@@ -475,6 +562,7 @@ barPlot=["Bar Width","Bar Colors","Edge Color","Hatch Pattern"]
 piePlot=["Explode","Colors","Pie Hatch Pattern"]
 hatchPattern =["None","/","\\",'|',"-","+","x","o","O",".","*","//","\\\\","||","--","++","xx","oo","OO","..","**","/o","|/","|*","'-\'","+o","x*","o-","O|","O.","*_"]
 def changeContent(): #Changing the content of the format label frame
+    global dropDownC
     # Clear previous widgets inside LabelFrame
     print(f"Drop down is: {dropDown.get()}")
     for widget in graphFormatLabelFrame.winfo_children():
@@ -521,7 +609,7 @@ def changeContent(): #Changing the content of the format label frame
         for c in range(4):  # 2 columns * 2 (label+entry)
             graphFormatLabelFrame.grid_columnconfigure(c, weight=1)
     elif(dropDown.get()=="Bar Graph"):
-        createBarPlot([],[],[],[],[],0,True,False,[])
+        createBarPlot([],[],[],[],[],0,True,False,[]) # Reset the graph
         count = 0  # row counter
         for j, values in enumerate(barPlot):
             col = j % 2  # 2 columns
@@ -535,7 +623,7 @@ def changeContent(): #Changing the content of the format label frame
                 dropDownC = ttk.Combobox(graphFormatLabelFrame, values=["Default Colors","Random","Custom"], state="readonly", width=10)
                 dropDownC.current(0)
                 dropDownC.grid(row=count, column=col * 2 + 1, sticky="ew", padx=5, pady=5)
-                dropDownC.bind("<<ComboboxSelected>>", lambda event, v=values: onCustomSelect(event, v, "barColor"))
+                dropDownC.bind("<<ComboboxSelected>>", lambda event, v=values, c=dropDownC: onCustomSelect(event, v,"barColor",c))
             elif(j==0):
                 spinBox = ttk.Spinbox(graphFormatLabelFrame, from_=0.1,to=1.0, increment=0.1,state="readonly", width=10)
                 spinBox.set(0.5)
@@ -544,7 +632,7 @@ def changeContent(): #Changing the content of the format label frame
                 dropDownH = ttk.Combobox(graphFormatLabelFrame, values=["None","Random","Custom"], state="readonly", width=10)
                 dropDownH.current(0)
                 dropDownH.grid(row=count, column=col * 2 + 1, sticky="ew", padx=5, pady=5)
-                dropDownH.bind("<<ComboboxSelected>>", lambda event, v=values: onCustomSelect(event, v, "hatch"))
+                dropDownH.bind("<<ComboboxSelected>>", lambda event, v=values, c=dropDownH: onCustomSelect(event, v, "hatch",c))
 
 
             else:
@@ -577,17 +665,17 @@ def changeContent(): #Changing the content of the format label frame
                 dropDownPieEx = ttk.Combobox(graphFormatLabelFrame, values=["None","Random","Custom"], state="readonly", width=10)
                 dropDownPieEx.current(0)
                 dropDownPieEx.grid(row=count, column=col * 2 + 1, sticky="ew", padx=5, pady=5)
-                dropDownPieEx.bind("<<ComboboxSelected>>",lambda event, v=values: onCustomSelect(event, v, "hatch"))
+                dropDownPieEx.bind("<<ComboboxSelected>>",lambda event, v=values, c=dropDownPieEx: onCustomSelect(event, v, "hatch",c))
             elif(j==1): #Color of pie
                 dropDownPieColor = ttk.Combobox(graphFormatLabelFrame, values=["Default Colors","Random","Custom"], state="readonly", width=10)
                 dropDownPieColor.current(0)
                 dropDownPieColor.grid(row=count, column=col * 2 + 1, sticky="ew", padx=5, pady=5)
-                dropDownPieColor.bind("<<ComboboxSelected>>", lambda event, v=values: onCustomSelect(event, v, "barColor"))
+                dropDownPieColor.bind("<<ComboboxSelected>>", lambda event, v=values, c=dropDownPieColor: onCustomSelect(event, v, "barColor",c))
             elif(j==2): #Hatch
                 dropDownPieHatch = ttk.Combobox(graphFormatLabelFrame, values=["None","Random","Custom"], state="readonly", width=10)
                 dropDownPieHatch.current(0)
                 dropDownPieHatch.grid(row=count, column=col * 2 + 1, sticky="ew", padx=5, pady=5)
-                dropDownPieHatch.bind("<<ComboboxSelected>>",lambda event, v=values: onCustomSelect(event, v, "hatch"))
+                dropDownPieHatch.bind("<<ComboboxSelected>>",lambda event, v=values,c=dropDownPieHatch: onCustomSelect(event, v, "hatch",c))
 
 
             if col == 1:
@@ -608,7 +696,7 @@ def getRandom(option,what):
 
 
 def saveFormat(feature):
-    global formatValues, finalValues,colorOption,hatchPattern,colorBar,edgeColor,hatchPatternVal,pieColor,pieHatch,explodeVal,explodeOption,chartLabels
+    global formatValues, finalValues,colorOption,hatchPattern,colorBar,edgeColor,hatchPatternVal,pieColor,pieHatch,explodeVal,explodeOption,chartLabels,lastColBar,lastColEdge,lastColPie
     formatValues=[]
     finalValues=[]
     finalChartLabelVal=[]
@@ -762,6 +850,11 @@ def saveFormat(feature):
 
     if not pieHatch == None:
         pieHatch = [None if h=="None" else h for h in pieHatch]
+    
+    if colorBar ==[]:
+        colorBar=["blue","blue","blue","blue","blue",]
+    if edgeColor == []:
+        edgeColor=["red","red","red","red","red",]
 
     print(f"The Format Values are: {formatValues}\n\n")
     print(f"Chart Labels are: {finalChartLabelVal}\n")
@@ -783,6 +876,25 @@ def saveFormat(feature):
 
     print("X Value is :",x)
     print("Y Value is :", y)
+
+    if not colorBar == None:
+        lastColBar = colorBar #Last Saved Colors
+    else:
+         lastColBar = ["blue","blue","blue","blue","blue"] #Last Saved Colors
+    if not edgeColor == None:
+        lastColEdge = edgeColor
+    else:
+        lastColEdge = ["red","red","red","red","red"] #Last Saved Colors
+    if not pieColor == None:
+        lastColPie = pieColor
+    else:
+        lastColPie = ["red","red","red","red","red"] #Last Saved Colors
+    
+       
+    
+
+
+    
 
     if graphType == "Line Graph":#Plottig the Graph
         #The Format Values are: [shape= 'o', size= '6', mfc='red', mec='red', linestyle= '-', lineCol='red', lineWidth='1'] EXAMPLE
@@ -922,7 +1034,7 @@ def resetButton():
 
 
 def resetAllValues(ask):
-    global hatchPatternVal,pieHatch,pieColor,edgeColor,colorBar,formatValues,explodeVal,entryValues,toggles,currentVal
+    global hatchPatternVal,pieHatch,pieColor,edgeColor,colorBar,formatValues,explodeVal,entryValues,toggles,currentVa,chartLabels,lastColBar,lastColEdge,lastColPie
 
     if ask:
         conf=confirmPop("Reset the Entries and Figure?")
@@ -931,16 +1043,27 @@ def resetAllValues(ask):
         else:
             for i in entryValues:
                 i.delete(0, tk.END)
+            for i in chartLabels:
+                i.delete(0, tk.END)
 
     hatchPatternVal = []
+   
     pieHatch = []
     pieColor = []
     edgeColor = []
     colorBar = []
     formatValues = []
     explodeVal = []
-
+    lastColBar=["blue","blue","blue","blue","blue"]
+    lastColEdge=["red","red","red","red","red"]
+    lastColPie=["red","red","red","red","red"]
     currentVal={}
+
+    
+    for index ,widget in enumerate(graphFormatLabelFrame.winfo_children()):
+        print("The index is :",index)
+        if (isinstance(widget,( ttk.Combobox,))):
+            widget.current(0)
 
 
     for i in toggles:
