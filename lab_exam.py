@@ -175,9 +175,9 @@ def createPiePlot(xValues,yValues,pieColor,pieHatch,explode,percentage,first,tog
         ax.set_title(finalValues["title"], fontsize=14, fontweight="bold", color="black")
 
         if not checkPercent.get():
-            ax.pie(finalValues["y"], labels=finalValues["x"],colors=finalValues["colors"],hatch=finalValues["hatch"],explode=finalValues["explode"],shadow = checkShadow.get())
+            ax.pie(finalValues["y"], labels=finalValues["x"],colors=finalValues["colors"],hatch=finalValues["hatch"],explode=finalValues["explode"],shadow = checkShadow.get(),wedgeprops={'edgecolor': 'black', 'linewidth': 1, 'alpha': 0.9},)
         else:
-            wedges, texts, autotexts =ax.pie(finalValues["y"], labels=finalValues["x"], colors=finalValues["colors"], hatch=finalValues["hatch"],explode=finalValues["explode"], shadow=checkShadow.get(),autopct="%1.1f%%")
+            wedges, texts, autotexts =ax.pie(finalValues["y"], labels=finalValues["x"], colors=finalValues["colors"], hatch=finalValues["hatch"],explode=finalValues["explode"], shadow=checkShadow.get(),autopct="%1.1f%%",wedgeprops={'edgecolor': 'black', 'linewidth': 1, 'alpha': 0.9},)
             if checkPctWhite.get():
                 print("Pumasok sa change color pct")
                 for percentText in autotexts:
