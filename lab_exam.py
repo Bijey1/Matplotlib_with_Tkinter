@@ -620,12 +620,6 @@ def saveFormat(feature):
                         explodeVal =None
                     else:
                         value= "explode pie Custom"
-                elif index == 7:
-                    if(value == "Actual Number"):
-                        percent = False
-                    else:
-                        percent = True
-
             formatValues.append(value)
 
     if not hatchPatternVal == None:
