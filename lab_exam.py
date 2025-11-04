@@ -500,15 +500,13 @@ def changeContent(): #Changing the content of the format label frame
             if col == 1:
              count += 1
         # Make all columns expandable
-        for c in range(4):  # 2 columns * 2 (label+entry)
+        for c in range(4):  
             graphFormatLabelFrame.grid_columnconfigure(c, weight=1)
 
 def getRandom(option,what):
-    if(what=="explode"):
-        return random.choices(option, k=5)
-    else:
-        return random.sample(option,5)
-
+    if(what=="explode"): return random.choices(option, k=5)   
+    else: return random.sample(option,5)
+ 
 def saveFormat(feature):
     global formatValues, finalValues,colorOption,hatchPattern,colorBar,edgeColor,hatchPatternVal,pieColor,pieHatch,explodeVal,explodeOption,chartLabels,lastColBar,lastColEdge,lastColPie,prevPieHatch,prevBarHatch,prevExplode
     formatValues=[]
@@ -835,7 +833,7 @@ for i in range(2):
     leftLabelFrame.pack_propagate(False)
     leftLabelFrame.pack(fill="both",padx=20,pady=10)
     count = 0  # row counter
-    
+
     for j in range(5):
         col = j % 2  # 2 columns
         # Label
